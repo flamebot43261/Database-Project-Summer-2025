@@ -62,6 +62,32 @@ private:
     std::string zip_code;
 };
 
+
+class Staff
+{
+public:
+    int staff_id;
+    std::string first_name;
+    std::string last_name;
+    std::string email;
+    std::string phone_number;
+    std::string role;
+    std::string hire_date;
+    // Constructor
+    Staff(int id, const std::string &f_name, const std::string &l_name, const std::string &e, const std::string &phone, const std::string &r, const std::string &date)
+        : staff_id(id), first_name(f_name), last_name(l_name), email(e), phone_number(phone), role(r), hire_date(date) {}
+    // Getters
+    std::string get_password() const { return password; }
+    double get_salary() const { return salary; }
+    // Setters
+    void set_password(const std::string &pass) { password = pass; }
+    void set_salary(double sal) { salary = sal; }
+
+private:
+    std::string password;
+    double salary;
+};
+
 class PaymentMethod
 {
 public:
@@ -98,31 +124,6 @@ public:
     // Constructor
     Transaction(int id, int c_id, int v_id, int qty, double amount, const std::string &date, const std::string &status, int card)
         : transaction_id(id), customer_id(c_id), vinyl_id(v_id), quantity(qty), total_amount(amount), transaction_date(date), transaction_status(status), card_id(card) {}
-};
-
-class Staff
-{
-public:
-    int staff_id;
-    std::string first_name;
-    std::string last_name;
-    std::string email;
-    std::string phone_number;
-    std::string role;
-    std::string hire_date;
-    // Constructor
-    Staff(int id, const std::string &f_name, const std::string &l_name, const std::string &e, const std::string &phone, const std::string &r, const std::string &date)
-        : staff_id(id), first_name(f_name), last_name(l_name), email(e), phone_number(phone), role(r), hire_date(date) {}
-    // Getters
-    std::string get_password() const { return password; }
-    double get_salary() const { return salary; }
-    // Setters
-    void set_password(const std::string &pass) { password = pass; }
-    void set_salary(double sal) { salary = sal; }
-
-private:
-    std::string password;
-    double salary;
 };
 
 #endif
