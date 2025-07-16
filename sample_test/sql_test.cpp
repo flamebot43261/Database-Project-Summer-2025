@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string>
 
-#include <iostream>
 #include <mysql_connection.h>
 #include <cppconn/driver.h>
 #include <cppconn/exception.h>
