@@ -15,12 +15,18 @@ int main(){
     sql::ResultSet *res;
 
     try {
+        const char* db_pass_cstr = getenv("DB_PASSWORD");
+        if (db_pass_cstr == nullptr) {
+            std::cerr << "Error: DB_PASSWORD environment variable not set." << std::endl;
+            return 1;
+        }
+        std::string pass = db_pass_cstr;
+        
         driver = get_driver_instance();
 
         // --- Use your Google Cloud SQL details here ---
         std::string host = "tcp://127.0.0.1:3306"; // e.g., "tcp://34.123.45.67:3306"
         std::string user = "root";
-        std::string pass = "bhargavdoodoopoopoo123";
         std::string db = "vinyl_db";
 
         con = driver->connect(host, user, pass);
