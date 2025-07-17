@@ -12,6 +12,7 @@ public:
     std::string name;
     std::string country;
     // Constructor
+    artist() : artist_id(0), name(""), country("") {}
     artist(int id, const std::string &n, const std::string &c)
         : artist_id(id), name(n), country(c) {}
 };
@@ -29,6 +30,7 @@ public:
     int stock_quantity;
     std::string description;
     // Constructor
+    vinyl_record() : vinyl_id(0), title(""), artist_id(0), genre(""), release_year(0), price(0.0), stock_quantity(0), description("") {}
     vinyl_record(int id, const std::string &t, int a_id, const std::string &g, int year, double p, int stock, const std::string &desc)
         : vinyl_id(id), title(t), artist_id(a_id), genre(g), release_year(year), price(p), stock_quantity(stock), description(desc) {}
 };
@@ -42,6 +44,7 @@ public:
     std::string email;
     std::string phone_number;
     // Constructor
+    Customer() : customer_id(0), first_name(""), last_name(""), email(""), phone_number("") {};
     Customer(int id, const std::string &f_name, const std::string &l_name, const std::string &e, const std::string &phone)
         : customer_id(id), first_name(f_name), last_name(l_name), email(e), phone_number(phone) {}
     // Getters
@@ -62,7 +65,6 @@ private:
     std::string zip_code;
 };
 
-
 class Staff
 {
 public:
@@ -74,6 +76,7 @@ public:
     std::string role;
     std::string hire_date;
     // Constructor
+    Staff() : staff_id(0), first_name(""), last_name(""), email(""), phone_number(""), role(""), hire_date("") {};
     Staff(int id, const std::string &f_name, const std::string &l_name, const std::string &e, const std::string &phone, const std::string &r, const std::string &date)
         : staff_id(id), first_name(f_name), last_name(l_name), email(e), phone_number(phone), role(r), hire_date(date) {}
     // Getters

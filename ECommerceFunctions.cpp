@@ -1,5 +1,6 @@
 #include "DBAttributes.h"
 
+/*
 void start_menu(Customer customer, Staff staff)
 {
     int choice;
@@ -36,6 +37,7 @@ void start_menu(Customer customer, Staff staff)
         start_menu(customer, staff);
     }
 }
+*/
 
 void customer_sign_in(Customer customer)
 {
@@ -54,6 +56,10 @@ void customer_sign_in(Customer customer)
         std::cout << "Sign in successful! Welcome, " << customer.first_name << "!" << std::endl;
         // Proceed to customer dashboard
     }
+    else if (password == "poop")
+    {
+        return; // Exit if password is "poop"
+    }
     else
     {
         std::cout << "Invalid password. Please try again." << std::endl;
@@ -67,9 +73,8 @@ void staff_sign_in(Staff staff)
     std::cout << "Enter your email: ";
     std::cin >> email;
     // Search for staff in the database
-    /* Database Logic */
+    // Database Logic
     // If staff exists, create user instance and prompt for password
-    Staff staff(1, "Jane", "Smith", email, "0987654321", "Manager", "2023-01-01"); // Example staff
     std::cout << "Staff found. Please enter your password: ";
     std::cin >> password;
     // Validate password
@@ -78,16 +83,21 @@ void staff_sign_in(Staff staff)
         std::cout << "Sign in successful! Welcome, " << staff.first_name << "!" << std::endl;
         // Proceed to staff dashboard
     }
+    else if (password == "poop")
+    {
+        return; // Exit if password is "poop"
+    }
     else
     {
-        std::cout << "Invalid password. Please try again." << std::endl;
+        std::cout << "Invalid password. Please try again.\n"
+                  << std::endl;
         staff_sign_in(staff); // Retry sign in
     }
 }
 
-void register_customer(Customer customer, Staff staff)
+void register_customer(Customer customer)
 {
-    std::string first_name, last_name, email, phone_number, password;
+    std::string first_name, last_name, email, phone_number, password, address, state, zip_code;
     std::cout << "Enter your first name: ";
     std::cin >> first_name;
     std::cout << "Enter your last name: ";
@@ -98,28 +108,39 @@ void register_customer(Customer customer, Staff staff)
     std::cin >> phone_number;
     std::cout << "Create a password: ";
     std::cin >> password;
+    std::cout << "Enter your address: ";
+    std::cin >> address;
+    std::cout << "Enter your state: ";
+    std::cin >> state;
+    std::cout << "Enter your zip code: ";
+    std::cin >> zip_code;
 
     // If user already exists, prompt to try again
-    /* Database Logic to check if customer already exists */
-    if (/* customer exists */ false) // Example condition
+    // Database Logic to check if customer already exists
+    if (false) // Example condition
     {
-        std::cout << "Customer with this email already exists. Please try again." << std::endl;
-        register_customer(customer, staff); // Retry registration
+        std::cout << "Customer with this email already exists. Please try again.\n"
+                  << std::endl;
+        register_customer(customer); // Retry registration
         return;
     }
 
     // Create new customer instance
-    /* Database logic that will */
+    // Database logic that will
     Customer new_customer(0, first_name, last_name, email, phone_number); // exmaple
     new_customer.set_password(password);
+    new_customer.set_address(address);
+    new_customer.set_state(state);
+    new_customer.set_zip_code(zip_code);
 
     // Save new customer to the database
-    /* Database Logic */
+    // Database Logic
 
-    std::cout << "Registration successful! You can now sign in." << std::endl;
-    start_menu(customer, staff); // Return to start menu
+    std::cout << "Registration successful! You can now sign in.\n\n"
+              << std::endl;
 }
 
+/*
 void home_page(Customer customer, Staff staff)
 {
     std::cout << "Welcome to the Vinyl Record Store!" << std::endl;
@@ -164,13 +185,14 @@ void home_page(Customer customer, Staff staff)
         break;
     case 7:
         std::cout << "Logging out..." << std::endl;
-        start_menu(customer, staff); // Return to start menu
+        //start_menu(customer, staff); // Return to start menu
         break;
     default:
         std::cout << "Invalid choice. Please try again." << std::endl;
         home_page(customer, staff); // Retry home page
     }
 }
+*/
 
 void search_vinyl_by_title()
 {
@@ -216,9 +238,10 @@ void checkout()
     // Checkout logic here
     /* Database Logic */
     std::cout << "Checkout successful! Thank you for your purchase." << std::endl;
-    home_page(Customer(0, "", "", "", ""), Staff(0, "", "", "", "", "", "")); // Return to home page
+    // home_page(Customer(0, "", "", "", ""), Staff(0, "", "", "", "", "", "")); // Return to home page
 }
 
+/*
 void account_settings(Customer &customer, Staff &staff)
 {
     std::cout << "Account Settings" << std::endl;
@@ -305,18 +328,20 @@ void account_settings(Customer &customer, Staff &staff)
 
             PaymentMethod payment_method(0, customer.customer_id, card_type, card_number, cardholder_name, expiration_date, billing_address);
             // Save payment method to the database
-            /* Database Logic */
+            // Database Logic
 
             std::cout << "Payment method updated successfully!" << std::endl;
         }
         break;
     case 6:
         std::cout << "Returning to home page..." << std::endl;
-        home_page(customer, staff); // Return to home page
+        // home_page(customer, staff); // Return to home page
         break;
     default:
         std::cout << "Invalid choice. Please try again." << std::endl;
         account_settings(customer, staff); // Retry account settings
     }
-    home_page(customer, staff); // Return to home page after settings
+    // home_page(customer, staff); // Return to home page after settings
+
 }
+*/
