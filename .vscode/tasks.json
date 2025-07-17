@@ -11,7 +11,7 @@
 				"${file}",
 				"-o",
 				"${fileDirname}/${fileBasenameNoExtension}",
-				"-I/usr/include/mysql_connection.h",
+				"-I/usr/include",
 				"-L/usr/lib/x86_64-linux-gnu",
 				"-lmysqlcppconn"
 			],

@@ -2,26 +2,28 @@
 #include <stdlib.h>
 #include <string>
 
-#include <iostream>
 #include <mysql_connection.h>
 #include <cppconn/driver.h>
 #include <cppconn/exception.h>
 #include <cppconn/prepared_statement.h>
 
-int main(){
+int main()
+{
     sql::Driver *driver;
     sql::Connection *con;
     sql::Statement *stmt;
     sql::ResultSet *res;
 
-    try {
-        const char* db_pass_cstr = getenv("DB_PASSWORD");
-        if (db_pass_cstr == nullptr) {
+    try
+    {
+        const char *db_pass_cstr = getenv("DB_PASSWORD");
+        if (db_pass_cstr == nullptr)
+        {
             std::cerr << "Error: DB_PASSWORD environment variable not set." << std::endl;
             return 1;
         }
         std::string pass = db_pass_cstr;
-        
+
         driver = get_driver_instance();
 
         // --- Use your Google Cloud SQL details here ---
@@ -36,15 +38,17 @@ int main(){
         stmt = con->createStatement();
         res = stmt->executeQuery("SELECT 'Successfully connected to Google Cloud SQL!' AS _message");
 
-        while (res->next()) {
+        while (res->next())
+        {
             std::cout << res->getString("_message") << std::endl;
         }
 
         delete res;
         delete stmt;
         delete con;
-
-    } catch (sql::SQLException &e) {
+    }
+    catch (sql::SQLException &e)
+    {
         std::cout << "# ERR: SQLException in " << __FILE__;
         std::cout << "(" << __FUNCTION__ << ") on line " << __LINE__ << std::endl;
         std::cout << "# ERR: " << e.what();
