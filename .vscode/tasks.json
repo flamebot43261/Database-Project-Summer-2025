@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 {
 	"version": "2.0.0",
 	"tasks": [
@@ -29,36 +28,4 @@
 			"detail": "compiler: /usr/bin/g++"
 		}
 	]
-=======
-{
-	"version": "2.0.0",
-	"tasks": [
-		{
-			"type": "cppbuild",
-			"label": "C/C++: g++ build active file",
-			"command": "/usr/bin/g++",
-			"args": [
-				"-fdiagnostics-color=always",
-				"-g",
-				"${file}",
-				"-o",
-				"${fileDirname}/${fileBasenameNoExtension}",
-				"-I/usr/include",
-				"-L/usr/lib/x86_64-linux-gnu",
-				"-lmysqlcppconn"
-			],
-			"options": {
-				"cwd": "${fileDirname}"
-			},
-			"problemMatcher": [
-				"$gcc"
-			],
-			"group": {
-				"kind": "build",
-				"isDefault": true
-			},
-			"detail": "compiler: /usr/bin/g++"
-		}
-	]
->>>>>>> cd2063f (renamed file)
 }
