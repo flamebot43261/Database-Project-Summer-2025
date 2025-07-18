@@ -123,7 +123,7 @@ int main()
             break;
         case 5:
             // Handle checkout
-            checkout(con, customer);
+            checkout(con, customer, cart);
             break;
         case 6:
             // Handle account settings
