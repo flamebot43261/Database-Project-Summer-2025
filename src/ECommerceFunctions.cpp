@@ -1,4 +1,8 @@
 #include "DBAttributes.h"
+#include "ECommerceFunctions.h"
+#include <cppconn/prepared_statement.h>
+#include <cppconn/resultset.h>
+#include <cppconn/exception.h>
 
 /*
 void start_menu(Customer customer, Staff staff)
@@ -39,63 +43,140 @@ void start_menu(Customer customer, Staff staff)
 }
 */
 
-void customer_sign_in(Customer customer)
+// Pass the database connection and a reference to the customer object
+void customer_sign_in(sql::Connection *con, Customer &customer)
 {
     std::string email, password;
+    sql::PreparedStatement *pstmt;
+    sql::ResultSet *res;
+
     std::cout << "Enter your email: ";
     std::cin >> email;
-    // Search for customer in the database
-    /* Database Logic */
-    // If customer exists, create user instance and prompt for password
-    ; // Example customer
-    std::cout << "Customer found. Please enter your password: ";
-    std::cin >> password;
-    // Validate password
-    if (customer.get_password() == password)
+
+    try
     {
-        std::cout << "Sign in successful! Welcome, " << customer.first_name << "!" << std::endl;
-        // Proceed to customer dashboard
+        // 1. Prepare the SQL query
+        pstmt = con->prepareStatement("SELECT * FROM customer WHERE email = ?");
+        pstmt->setString(1, email);
+
+        // 2. Execute the query and get the ResultSet
+        res = pstmt->executeQuery();
+
+        // 3. Use res->next() to check if a row was returned
+        if (res->next())
+        {
+            // A customer was found, now get their stored password
+            int customer_ID = res->getInt("customerID");
+            std::string last_name = res->getString("lastName");
+            std::string cust_email = res->getString("email");
+            std::string address = res->getString("address");
+            std::string city = res->getString("city");
+            std::string state = res->getString("state");
+            std::string zip_code = res->getString("zip_code");
+            std::string phone_number = res->getString("phone_number");
+            std::string db_password = res->getString("userPassword");
+            std::string first_name = res->getString("firstName");
+
+            customer.customer_id = customer_ID;
+            customer.last_name = last_name;
+            customer.email = cust_email;
+            customer.set_address(address);
+            customer.set_city(city);
+            customer.set_state(state);
+            customer.set_zip_code(zip_code);
+            customer.phone_number = phone_number;
+
+            std::cout << "Customer found. Please enter your password: ";
+            std::cin >> password;
+
+            // 4. Validate the entered password against the one from the database
+            if (db_password == password)
+            {
+                std::cout << "Sign in successful! Welcome, " << first_name << "!" << std::endl;
+                // You can populate your customer object here if needed
+                // customer.first_name = first_name;
+                customer.customer_id = 
+            }
+            else
+            {
+                std::cout << "Invalid password. Please try again." << std::endl;
+            }
+        }
+        else
+        {
+            std::cout << "No customer found with that email address." << std::endl;
+        }
+
+        // 5. Clean up the resources
+        delete res;
+        delete pstmt;
     }
-    else if (password == "poop")
+    catch (sql::SQLException &e)
     {
-        return; // Exit if password is "poop"
-    }
-    else
-    {
-        std::cout << "Invalid password. Please try again." << std::endl;
-        customer_sign_in(customer); // Retry sign in
+        std::cerr << "SQL Error during sign-in: " << e.what() << std::endl;
     }
 }
 
-void staff_sign_in(Staff staff)
+void staff_sign_in(sql::Connection *con, Staff &staff)
 {
+    std::string email, password;
+    sql::PreparedStatement *pstmt;
+    sql::ResultSet *res;
+
     std::string email, password;
     std::cout << "Enter your email: ";
     std::cin >> email;
     // Search for staff in the database
     // Database Logic
     // If staff exists, create user instance and prompt for password
-    std::cout << "Staff found. Please enter your password: ";
-    std::cin >> password;
-    // Validate password
-    if (staff.get_password() == password)
+    try
     {
-        std::cout << "Sign in successful! Welcome, " << staff.first_name << "!" << std::endl;
-        // Proceed to staff dashboard
+        // 1. Prepare the SQL query
+        pstmt = con->prepareStatement("SELECT * FROM staff WHERE email = ?");
+        pstmt->setString(1, email);
+
+        // 2. Execute the query and get the ResultSet
+        res = pstmt->executeQuery();
+
+        // 3. Use res->next() to check if a row was returned
+        if (res->next())
+        {
+            // A customer was found, now get their stored password
+            std::string db_password = res->getString("password_hash");
+            std::string first_name = res->getString("firstName");
+
+            std::cout << "Customer found. Please enter your password: ";
+            std::cin >> password;
+
+            // 4. Validate the entered password against the one from the database
+            if (db_password == password)
+            {
+                std::cout << "Sign in successful! Welcome, " << first_name << "!" << std::endl;
+                // You can populate your customer object here if needed
+                // customer.first_name = first_name;
+                
+            }
+            else
+            {
+                std::cout << "Invalid password. Please try again." << std::endl;
+            }
+        }
+        else
+        {
+            std::cout << "No customer found with that email address." << std::endl;
+        }
+
+        // 5. Clean up the resources
+        delete res;
+        delete pstmt;
     }
-    else if (password == "poop")
+    catch (sql::SQLException &e)
     {
-        return; // Exit if password is "poop"
-    }
-    else
-    {
-        std::cout << "Invalid password. Please try again.\n"
-                  << std::endl;
-        staff_sign_in(staff); // Retry sign in
+        std::cerr << "SQL Error during sign-in: " << e.what() << std::endl;
     }
 }
 
-void register_customer(Customer customer)
+void register_customer(Customer &customer)
 {
     std::string first_name, last_name, email, phone_number, password, address, state, zip_code;
     std::cout << "Enter your first name: ";
