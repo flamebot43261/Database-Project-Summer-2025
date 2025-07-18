@@ -1,5 +1,3 @@
 .vscode/
 
-GCP Local Proxy.session.sql
-
-RUN
+config/
