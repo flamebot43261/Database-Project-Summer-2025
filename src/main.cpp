@@ -29,9 +29,10 @@ int main()
     con = driver->connect(host, user, pass);
     con->setSchema(db);
     
-    // Initialize Customer and Staff objects
+    // Initialize Customer, Staff, and cart objects
     Customer customer;
     Staff staff;
+    std::vector<vinyl_record> cart;
 
     /* LOGIN PAGE ======================================================*/
     /* LOGIN PAGE ======================================================*/
@@ -67,7 +68,10 @@ int main()
             break;
         case 3:
             // Handle new customer registration
-            register_customer(customer);
+            {
+                register_customer(con, customer);
+                boolean = false;
+            }
             break;
         case 4:
             std::cout << "Exiting the application. Thank you!\n" << std::endl;
@@ -103,31 +107,31 @@ int main()
         {
         case 1:
             // Handle search by title
-            search_vinyl_by_title();
+            search_vinyl_by_title(con, cart);
             break;
         case 2:
             // Handle search by artist
-            search_vinyl_by_artist();
+            search_vinyl_by_artist(con);
             break;
         case 3:
             // Handle view all vinyls
-            view_all_vinyls();
+            view_all_vinyls(con);
             break;
         case 4:
             // Handle view cart
-            view_cart();
+            view_cart(cart, con, customer);
             break;
         case 5:
             // Handle checkout
-            checkout();
+            checkout(con, customer);
             break;
         case 6:
             // Handle account settings
             // account_settings(customer, staff);
             break;
         case 7:
-            std::cout << "Logging out..." << std::endl;
-            // start_menu(customer, staff); // Return to start menu
+            std::cout << "\nExiting the applciation. Thank you!" << std::endl;
+            exit(0);
             break;
         default:
             std::cout << "Invalid choice. Please try again." << std::endl;
@@ -135,7 +139,7 @@ int main()
         }
     }
 
-     delete res;
+    delete res;
     delete stmt;
     delete con;
 

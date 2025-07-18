@@ -3,6 +3,7 @@
 #include <cppconn/prepared_statement.h>
 #include <cppconn/resultset.h>
 #include <cppconn/exception.h>
+#include <vector>
 
 /*
 void start_menu(Customer customer, Staff staff)
@@ -66,25 +67,8 @@ void customer_sign_in(sql::Connection *con, Customer &customer)
         if (res->next())
         {
             // A customer was found, now get their stored password
-            int customer_ID = res->getInt("customerID");
-            std::string last_name = res->getString("lastName");
-            std::string cust_email = res->getString("email");
-            std::string address = res->getString("address");
-            std::string city = res->getString("city");
-            std::string state = res->getString("state");
-            std::string zip_code = res->getString("zip_code");
-            std::string phone_number = res->getString("phone_number");
             std::string db_password = res->getString("userPassword");
             std::string first_name = res->getString("firstName");
-
-            customer.customer_id = customer_ID;
-            customer.last_name = last_name;
-            customer.email = cust_email;
-            customer.set_address(address);
-            customer.set_city(city);
-            customer.set_state(state);
-            customer.set_zip_code(zip_code);
-            customer.phone_number = phone_number;
 
             std::cout << "Customer found. Please enter your password: ";
             std::cin >> password;
@@ -95,11 +79,28 @@ void customer_sign_in(sql::Connection *con, Customer &customer)
                 std::cout << "Sign in successful! Welcome, " << first_name << "!" << std::endl;
                 // You can populate your customer object here if needed
                 // customer.first_name = first_name;
-                customer.customer_id = 
+                int customer_ID = res->getInt("customerID");
+                std::string last_name = res->getString("lastName");
+                std::string cust_email = res->getString("email");
+                std::string address = res->getString("address");
+                std::string city = res->getString("city");
+                std::string state = res->getString("state");
+                std::string zip_code = res->getString("zip_code");
+                std::string phone_number = res->getString("phone_number");
+
+                customer.customer_id = customer_ID;
+                customer.last_name = last_name;
+                customer.email = cust_email;
+                customer.set_address(address);
+                customer.set_city(city);
+                customer.set_state(state);
+                customer.set_zip_code(zip_code);
+                customer.phone_number = phone_number;
             }
             else
             {
                 std::cout << "Invalid password. Please try again." << std::endl;
+                customer_sign_in(con, customer);
             }
         }
         else
@@ -123,7 +124,6 @@ void staff_sign_in(sql::Connection *con, Staff &staff)
     sql::PreparedStatement *pstmt;
     sql::ResultSet *res;
 
-    std::string email, password;
     std::cout << "Enter your email: ";
     std::cin >> email;
     // Search for staff in the database
@@ -176,9 +176,9 @@ void staff_sign_in(sql::Connection *con, Staff &staff)
     }
 }
 
-void register_customer(Customer &customer)
+void register_parameters(std::string &first_name, std::string &last_name, std::string &email, std::string &phone_number, std::string &password,
+    std::string &address, std::string &state, std::string &city, std::string &zip_code)
 {
-    std::string first_name, last_name, email, phone_number, password, address, state, zip_code;
     std::cout << "Enter your first name: ";
     std::cin >> first_name;
     std::cout << "Enter your last name: ";
@@ -190,35 +190,75 @@ void register_customer(Customer &customer)
     std::cout << "Create a password: ";
     std::cin >> password;
     std::cout << "Enter your address: ";
-    std::cin >> address;
+    // std::cin >> address;
+    std::cin.ignore();
+    std::getline(std::cin, address);
+    std::cin.clear();
+    std::cout << "Enter your city: ";
+    std::cin.ignore();
+    std::getline(std::cin, city);
+    std::cin.clear();
     std::cout << "Enter your state: ";
-    std::cin >> state;
+    std::cin.ignore();
+    std::getline(std::cin, state);
+    std::cin.clear();
     std::cout << "Enter your zip code: ";
     std::cin >> zip_code;
+}
 
-    // If user already exists, prompt to try again
-    // Database Logic to check if customer already exists
-    if (false) // Example condition
+void register_customer(sql::Connection *con, Customer &customer)
+{
+    sql::PreparedStatement *pstmt;
+    sql::ResultSet *res;
+
+    std::string first_name, last_name, email, phone_number, password, address, state, city, zip_code;
+    register_parameters(first_name, last_name, email, phone_number, password, address, state, city, zip_code);
+
+    try
     {
-        std::cout << "Customer with this email already exists. Please try again.\n"
-                  << std::endl;
-        register_customer(customer); // Retry registration
-        return;
+        // 1. Prepare the SQL query
+        pstmt = con->prepareStatement("SELECT * FROM customer WHERE email = ?");
+        pstmt->setString(1, email);
+
+        // 2. Execute the query and get the ResultSet
+        res = pstmt->executeQuery();
+
+        // 3. Use res->next() to check if a row was returned
+        if (res->next())
+        {
+            // A customer was found, make user try again
+            std::cout << "\nAn account already exists with this email. Please register with a different email.\n";
+            register_customer(con, customer);
+        }
+        else 
+        {
+            // Prepare the INSERT statement
+            pstmt = con->prepareStatement("INSERT INTO customer(firstName, lastName, email, userPassword, address, city, state, zip_code, phone_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            pstmt->setString(1, first_name);
+            pstmt->setString(2, last_name);
+            pstmt->setString(3, email);
+            pstmt->setString(4, password);
+            pstmt->setString(5, address);
+            pstmt->setString(6, city);
+            pstmt->setString(7, state);
+            pstmt->setString(8, zip_code);
+            pstmt->setString(9, phone_number);
+
+            // Execute the INSERT statement
+            pstmt->executeUpdate();
+
+            std::cout << "\nRegistration successful! You can now sign in.\n" << std::endl;
+        }
+        if (res) delete res;
+        if (pstmt) delete pstmt;
     }
-
-    // Create new customer instance
-    // Database logic that will
-    Customer new_customer(0, first_name, last_name, email, phone_number); // exmaple
-    new_customer.set_password(password);
-    new_customer.set_address(address);
-    new_customer.set_state(state);
-    new_customer.set_zip_code(zip_code);
-
-    // Save new customer to the database
-    // Database Logic
-
-    std::cout << "Registration successful! You can now sign in.\n\n"
-              << std::endl;
+    catch (sql::SQLException &e)
+    {
+        // Clean up in case of an exception
+        if (res) delete res;
+        if (pstmt) delete pstmt;
+        std::cerr << "SQL Error during registration: " << e.what() << std::endl;
+    }
 }
 
 /*
@@ -275,7 +315,7 @@ void home_page(Customer customer, Staff staff)
 }
 */
 
-void search_vinyl_by_title()
+void search_vinyl_by_title(sql::Connection* con, std::vector<vinyl_record> &cart)
 {
     std::string title;
     std::cout << "Enter the title of the vinyl: ";
@@ -285,39 +325,206 @@ void search_vinyl_by_title()
     /* Database Logic */
     std::cout << "Searching for vinyls with title: " << title << std::endl;
     // Display results
+    std::cout << "==================================";
+    
+    sql::PreparedStatement *pstmt = nullptr;
+    sql::ResultSet *res = nullptr;
+
+    try
+    {
+        // This query joins vinyl_record with artists to get the artist's name.
+        // It uses "LIKE" to allow for partial matches on the title.
+        std::string query = "SELECT v.vinylID, v.title, v.artistID, v.genre, v.releaseYear, v.price, v.stockQuantity, v.description, a.artistName "
+                            "FROM vinyl_record v "
+                            "JOIN artists a ON v.artistID = a.artistID "
+                            "WHERE v.title LIKE ?";
+        
+        pstmt = con->prepareStatement(query);
+        
+        // Add '%' wildcards to the search term for partial matching
+        std::string search_term = "%" + title + "%";
+        pstmt->setString(1, search_term);
+
+        res = pstmt->executeQuery();
+
+        std::cout << "\n--- Search Results ---\n" << std::endl;
+        bool found = false;
+        // Loop through all the matching records
+        while (res->next())
+        {
+            found = true;
+            // Retrieve and display data for each record
+            std::cout << "Title: " << res->getString("title") << std::endl;
+            std::cout << "Artist: " << res->getString("artistName") << std::endl;
+            std::cout << "Price: $" << res->getDouble("price") << std::endl;
+            std::cout << "Stock: " << res->getInt("stockQuantity") << std::endl;
+            std::cout << "----------------------------------" << std::endl;
+            // Create temp variable and add to cart
+            vinyl_record temp(res->getInt("vinylID"), res->getString("title"), res->getInt("artistID"), res->getString("genre"), res->getInt("releaseYear"), res->getDouble("price"), res->getInt("stockQuantity"), res->getString("description"));
+            add_to_cart(cart, temp);
+            return;
+        }
+
+        
+        // Prompt user to add vinyl to cart if search is successful
+        if (!found)
+        {
+            std::cout << "No vinyl records found matching that title." << std::endl;
+        }
+
+        delete res;
+        delete pstmt;
+    }
+    catch (sql::SQLException &e)
+    {
+        std::cerr << "SQL Error during search: " << e.what() << std::endl;
+        // Clean up in case of an exception
+        if (res) delete res;
+        if (pstmt) delete pstmt;
+    }
 }
 
-void search_vinyl_by_artist()
+void search_vinyl_by_artist(sql::Connection* con)
 {
     std::string artist;
     std::cout << "Enter the artist name: ";
     std::cin.ignore(); // Clear input buffer
     std::getline(std::cin, artist);
     // Search logic here
+    sql::PreparedStatement *pstmt = nullptr;
+    sql::ResultSet *res = nullptr;
     /* Database Logic */
     std::cout << "Searching for vinyls by artist: " << artist << std::endl;
     // Display results
+    try
+    {
+        // This query joins vinyl_record with artists to get the artist's name.
+        // It uses "LIKE" to allow for partial matches on the artist's name.
+        std::string query = "SELECT v.title, a.artistName, v.price, v.stockQuantity "
+                            "FROM vinyl_record v "
+                            "JOIN artists a ON v.artistID = a.artistID "
+                            "WHERE a.artistName LIKE ?";
+        
+        pstmt = con->prepareStatement(query);
+        
+        // Add '%' wildcards to the search term for partial matching
+        std::string search_term = "%" + artist + "%";
+        pstmt->setString(1, search_term);
+
+        res = pstmt->executeQuery();
+
+        std::cout << "\n--- Search Results ---\n" << std::endl;
+        bool found = false;
+        // Loop through all the matching records
+        while (res->next())
+        {
+            found = true;
+            // Retrieve and display data for each record
+            std::cout << "Title: " << res->getString("title") << std::endl;
+            std::cout << "Artist: " << res->getString("artistName") << std::endl;
+            std::cout << "Price: $" << res->getDouble("price") << std::endl;
+            std::cout << "Stock: " << res->getInt("stockQuantity") << std::endl;
+            std::cout << "----------------------------------" << std::endl;
+        }
+
+        if (!found)
+        {
+            std::cout << "No vinyl records found for that artist." << std::endl;
+        }
+        
+        delete res;
+        delete pstmt;
+    }
+    catch (sql::SQLException &e)
+    {
+        std::cerr << "SQL Error during search: " << e.what() << std::endl;
+        // Clean up in case of an exception
+        if (res) delete res;
+        if (pstmt) delete pstmt;
+    }
 }
 
-void view_all_vinyls()
+void view_all_vinyls(sql::Connection* con)
 {
-    std::cout << "Displaying all vinyl records..." << std::endl;
-    // Fetch and display all vinyl records from the database
-    /* Database Logic */
+    std::cout << "\n--- All Vinyl Titles ---\n";
+    std::cout << "==========================\n";
+    
+    sql::PreparedStatement *pstmt = nullptr;
+    sql::ResultSet *res = nullptr;
+
+    try
+    {
+        // Query to select just the titles from the vinyl_record table, ordered alphabetically.
+        pstmt = con->prepareStatement("SELECT title FROM vinyl_record ORDER BY title");
+        res = pstmt->executeQuery();
+
+        bool found = false;
+        // Loop through all records and print the title
+        while (res->next())
+        {
+            found = true;
+            std::cout << "- " << res->getString("title") << std::endl;
+        }
+
+        if (!found)
+        {
+            std::cout << "There are no vinyl records currently in the store." << std::endl;
+        }
+        
+        std::cout << "\n------------------------\n" << std::endl;
+
+        delete res;
+        delete pstmt;
+    }
+    catch (sql::SQLException &e)
+    {
+        std::cerr << "SQL Error while fetching all vinyls: " << e.what() << std::endl;
+        if (res) delete res;
+        if (pstmt) delete pstmt;
+    }
+
 }
 
-void view_cart()
+void add_to_cart(std::vector<vinyl_record> &cart, const vinyl_record &record)
 {
-    std::cout << "Viewing your cart..." << std::endl;
+    std::cout << "\nWould you like to add this vinyl to your cart?: ";
+    if (std::getchar() == 'y' || std::getchar() == 'Y')
+    {
+        cart.push_back(record);
+        std::cout << "\n'" << record.title << "' has been added to your cart.\n\n";
+    }
+    std::cout << "Returning to homepage...\n\n";
+}
+
+void view_cart(const std::vector<vinyl_record> &cart, sql::Connection* con, const Customer customer)
+{
+    std::cout << "\nYour cart" << std::endl;
+    std::cout << "===========\n";
     // Fetch and display items in the cart
-    /* Database Logic */
+    for (auto i : cart)
+    {
+        std::cout << i.title << std::endl;
+    }
+    std::cout << "\nWould you like to checkout? (y/n): ";
+    if (std::getchar() == 'y' || std::getchar() == 'Y')
+    {
+        checkout(con, customer, cart);
+    }
+    else
+    {
+        std::cout << "\nReturning to menu...\n";
+    }
 }
 
-void checkout()
+void checkout(sql::Connection* con, const Customer customer, const std::vector<vinyl_record> cart)
 {
-    std::cout << "Proceeding to checkout..." << std::endl;
+    std::cout << "\nProceeding to checkout..." << std::endl;
     // Checkout logic here
     /* Database Logic */
+    for (auto i : cart)
+    {
+
+    }
     std::cout << "Checkout successful! Thank you for your purchase." << std::endl;
     // home_page(Customer(0, "", "", "", ""), Staff(0, "", "", "", "", "", "")); // Return to home page
 }
