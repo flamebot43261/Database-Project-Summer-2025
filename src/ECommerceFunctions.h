@@ -20,9 +20,9 @@ void view_all_vinyls(sql::Connection* con);
 // Cart & Checkout
 void add_to_cart(std::vector<vinyl_record> &cart, const vinyl_record &record);
 void view_cart(const std::vector<vinyl_record> &cart, sql::Connection* con, const Customer customer);
-void checkout(sql::Connection* con, const Customer customer, const std::vector<vinyl_record> cart);
+void checkout(sql::Connection* con, const Customer customer, std::vector<vinyl_record> &cart);
 
 // Account Management
-void account_settings(sql::Connection* con, Customer customer);
+void account_settings(sql::Connection* con, Customer &customer);
 
 #endif // ECOMMERCEFUNCTIONS_H

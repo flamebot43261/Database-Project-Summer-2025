@@ -4,6 +4,7 @@
 #include <cppconn/resultset.h>
 #include <cppconn/exception.h>
 #include <vector>
+#include <limits>
 
 /*
 void start_menu(Customer customer, Staff staff)
@@ -493,18 +494,20 @@ void add_to_cart(std::vector<vinyl_record> &cart, const vinyl_record &record)
         cart.push_back(record);
         std::cout << "\n'" << record.title << "' has been added to your cart.\n\n";
     }
+    std::cin.clear();
     std::cout << "Returning to homepage...\n\n";
 }
 
-void view_cart(const std::vector<vinyl_record> &cart, sql::Connection* con, const Customer customer)
+void view_cart(std::vector<vinyl_record> &cart, sql::Connection* con, const Customer customer)
 {
-    std::cout << "\nYour cart" << std::endl;
+    std::cout << "\nYour cart\n";
     std::cout << "===========\n";
     // Fetch and display items in the cart
-    for (auto i : cart)
+    for (auto record : cart)
     {
-        std::cout << i.title << std::endl;
+        std::cout << record.title << std::endl;
     }
+    std::cin.ignore();
     std::cout << "\nWould you like to checkout? (y/n): ";
     if (std::getchar() == 'y' || std::getchar() == 'Y')
     {
@@ -516,38 +519,106 @@ void view_cart(const std::vector<vinyl_record> &cart, sql::Connection* con, cons
     }
 }
 
-void checkout(sql::Connection* con, const Customer customer, const std::vector<vinyl_record> cart)
+void checkout(sql::Connection* con, const Customer customer, std::vector<vinyl_record> &cart)
 {
     std::cout << "\nProceeding to checkout..." << std::endl;
-    // Checkout logic here
-    /* Database Logic */
-    for (auto i : cart)
-    {
-
+    if (cart.empty()) {
+        std::cout << "Your cart is empty. Nothing to check out." << std::endl;
+        return;
     }
-    std::cout << "Checkout successful! Thank you for your purchase." << std::endl;
-    // home_page(Customer(0, "", "", "", ""), Staff(0, "", "", "", "", "", "")); // Return to home page
+
+    int customer_id, card_id;
+    
+    sql::PreparedStatement *pstmt = nullptr;
+    sql::PreparedStatement *pstmt2 = nullptr;
+    sql::ResultSet *res = nullptr;
+    
+    customer_id = customer.customer_id;
+
+    try
+    {
+        // 1. Find the customer's credit card
+        pstmt = con->prepareStatement("SELECT cardID FROM creditcards WHERE customerID = ?");
+        pstmt->setInt(1, customer_id); // FIX: Parameter index is 1
+        
+        res = pstmt->executeQuery();
+
+        if (res->next())
+        {
+            card_id = res->getInt("cardID");
+            delete res; // Clean up immediately
+            res = nullptr;
+            delete pstmt; // Clean up immediately
+            pstmt = nullptr;
+
+            // 2. Prepare the transaction insert statement ONCE
+            // FIX: Removed transactionID (AUTO_INCREMENT) and corrected card_id to cardID
+            pstmt = con->prepareStatement("INSERT INTO transactions(customerID, vinylID, cardID, quantity, price_at_purchase, transactionStatus) VALUES (?, ?, ?, ?, ?, ?)");
+            pstmt2 = con->prepareStatement("UPDATE vinyl_record SET stockQuantity = stockQuantity - 1 WHERE vinylID = ?");
+
+            // 3. Loop through the cart and execute the insert for each item
+            for (const auto& record : cart)
+            {
+                int quantity = 1; // Assuming quantity is always 1 per cart item
+                
+                pstmt->setInt(1, customer_id);
+                pstmt->setInt(2, record.vinyl_id);
+                pstmt->setInt(3, card_id);
+                pstmt->setInt(4, quantity);
+                pstmt->setDouble(5, record.price); // FIX: Use price from the record
+                pstmt->setString(6, "Completed"); // FIX: Set a default status
+
+                pstmt->executeUpdate();
+
+                // Execute stock decrementation on vinyl
+                pstmt2->setInt(1, record.vinyl_id);
+                pstmt2->executeUpdate();
+            }
+            
+            std::cout << "Checkout successful! Thank you for your purchase." << std::endl;
+            cart.clear(); // Empty cart after successful checkout
+        }
+        else
+        {
+            std::cout << "It seems that you have not saved a payment method to your profile." << std::endl;
+            std::cout << "Would you like to add a payment card? (Not implemented)\n";
+        }
+
+        // Final cleanup
+        if (res) delete res;
+        if (pstmt) delete pstmt;
+    }
+    catch(sql::SQLException &e)
+    {
+        std::cerr << "SQL Error during checkout: " << e.what() << std::endl;
+        // Ensure cleanup on error
+        if (res) delete res;
+        if (pstmt) delete pstmt;
+    }
 }
 
-/*
-void account_settings(Customer &customer, Staff &staff)
+
+void account_settings(sql::Connection *con, Customer &customer)
 {
-    std::cout << "Account Settings" << std::endl;
+    std::cout << "\nAccount Settings" << std::endl;
     std::cout << "================" << std::endl;
     std::cout << "1. Update Password" << std::endl;
     std::cout << "2. Update Address" << std::endl;
-    std::cout << "3. Update State" << std::endl;
-    std::cout << "4. Update Zip Code" << std::endl;
-    std::cout << "5. Update Payment Method" << std::endl;
-    std::cout << "6. Back to Home Page" << std::endl;
+    std::cout << "3. Update Payment Method" << std::endl;
+    std::cout << "4. View Transaction History" << std::endl;
+    std::cout << "5. Back to Home Page" << std::endl;
     std::cout << "Enter your choice: ";
     int choice;
+    // Prompt for choice
     std::cin >> choice;
     switch (choice)
     {
     case 1:
         // Update password
         {
+            // DB pointers
+            sql::PreparedStatement *pstmt = nullptr;
+            sql::ResultSet *res = nullptr;
             std::string new_password;
             // Prompt for old password
             std::string old_password;
@@ -556,80 +627,249 @@ void account_settings(Customer &customer, Staff &staff)
             // Validate old password
             if (customer.get_password() != old_password)
             {
-                std::cout << "Old password is incorrect. Please try again." << std::endl;
-                account_settings(customer, staff); // Retry account settings
-                return;
+                std::cout << "Incorrect sequence for old password. Please try again.\n" << std::endl;
+                account_settings(con, customer); // Retry account settings
             }
-            std::cout << "Enter new password: ";
+            std::cout << "\nAuthentication successful. Enter new password: ";
             std::cin >> new_password;
             customer.set_password(new_password);
-            std::cout << "Password updated successfully!" << std::endl;
+            // DB logic
+            try
+            {
+            // 1. Prepare the SQL query
+            pstmt = con->prepareStatement("SELECT * FROM customer WHERE email = ?");
+            pstmt->setString(1, customer.email);
+
+            // 2. Execute the query and get the ResultSet
+            res = pstmt->executeQuery();
+
+            // 3. Use res->next() to check if a row was returned
+            if (res->next())
+            {
+                // Update statements
+                pstmt = con->prepareStatement("UPDATE customer SET userPassword = ? WHERE email = ?");
+                pstmt->setString(1, customer.get_password());
+                pstmt->setString(2, customer.get_address());
+
+                // Execute the update statement
+                pstmt->executeUpdate();
+                std::cout << "\nPassword updated successfully!\n" << std::endl;
+            }
+            else 
+            {
+                std::cout << "\nThere was an error processing your request\n\n";
+                if (res) delete res;
+                if (pstmt) delete pstmt;
+                account_settings(con, customer);
+            }
+            if (res) delete res;
+            if (pstmt) delete pstmt;
+            }
+            catch (sql::SQLException &e)
+            {
+                // Clean up in case of an exception
+                if (res) delete res;
+                if (pstmt) delete pstmt;
+                std::cerr << "SQL Error during password change: " << e.what() << std::endl;
+            }
+            std::cout << "Password updated successfully!\n" << std::endl;
         }
         break;
     case 2:
         // Update address
         {
-            std::string new_address;
-            std::cout << "Enter new address: ";
-            std::cin.ignore(); // Clear input buffer
-            std::getline(std::cin, new_address);
-            customer.set_address(new_address);
-            std::cout << "Address updated successfully!" << std::endl;
+            // DB pointers
+            sql::PreparedStatement *pstmt = nullptr;
+            sql::ResultSet *res = nullptr;
+            std::string new_street, new_city, new_state, new_zip;
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); 
+            // Prompt new street address
+            std::cout << "\nEnter new street address: ";
+            std::getline(std::cin, new_street);
+            // Prompt new city
+            std::cout << "Enter City: ";
+            std::getline(std::cin, new_city);
+            // Prompt new state
+            std::cout << "Enter State: ";
+            std::getline(std::cin, new_state);
+            // Prompt new zip
+            std::cout << "Enter Zip/Postal Code: ";
+            std::getline(std::cin, new_zip);
+            
+            // Set new information
+            customer.set_address(new_street);
+            customer.set_city(new_city);
+            customer.set_state(new_state);
+            customer.set_zip_code(new_zip);
+
+            // Update in DB
+            try
+            {
+            // 1. Prepare the SQL query
+            pstmt = con->prepareStatement("SELECT * FROM customer WHERE email = ?");
+            pstmt->setString(1, customer.email);
+
+            // 2. Execute the query and get the ResultSet
+            res = pstmt->executeQuery();
+
+            // 3. Use res->next() to check if a row was returned
+            if (res->next())
+            {
+                // Update statements
+                pstmt = con->prepareStatement("UPDATE customer SET address = ?, city = ?, state = ?, zip_code = ? WHERE email = ?");
+                pstmt->setString(1, customer.get_address());
+                pstmt->setString(2, customer.get_city());
+                pstmt->setString(3, customer.get_state());
+                pstmt->setString(4, customer.get_zip_code());
+                pstmt->setString(5, customer.email);
+
+                // Execute the update statement
+                pstmt->executeUpdate();
+                std::cout << "\nAddress updated successfully!\n" << std::endl;
+            }
+            else 
+            {
+                std::cout << "\nThere was an error processing your request\n\n";
+                if (res) delete res;
+                if (pstmt) delete pstmt;
+                account_settings(con, customer);
+            }
+            if (res) delete res;
+            if (pstmt) delete pstmt;
+            }
+            catch (sql::SQLException &e)
+            {
+                // Clean up in case of an exception
+                if (res) delete res;
+                if (pstmt) delete pstmt;
+                std::cerr << "SQL Error during address change: " << e.what() << std::endl;
+            }
         }
         break;
     case 3:
-        // Update state
+        // Update payment method
         {
-            std::string new_state;
-            std::cout << "Enter new state: ";
-            std::cin >> new_state;
-            customer.set_state(new_state);
-            std::cout << "State updated successfully!" << std::endl;
+            // DB pointers
+            sql::PreparedStatement *pstmt = nullptr;
+            sql::ResultSet *res = nullptr;
+            // Info variables
+            std::string card_type, card_number, cardholder_name, expiration_date, billing_address;
+            // Get card type
+            std::cout << "\nEnter card type: ";
+            std::cin >> card_type;
+            // Get card number
+            std::cout << "Enter card number: ";
+            std::cin >> card_number;
+            // Get exp year
+            std::cout << "Enter expiration date (MM/YYYY): ";
+            std::cin >> expiration_date;
+            // Get billing address
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cout << "Enter full billing address: ";
+            std::getline(std::cin, billing_address);
+            // Save payment method to the database
+            // Database Logic
+            try
+            {
+                // 1. Prepare the SQL query
+                pstmt = con->prepareStatement("SELECT * FROM creditcards WHERE customerID = ?");
+                pstmt->setInt(1, customer.customer_id);
+
+                // 2. Execute the query and get the ResultSet
+                res = pstmt->executeQuery();
+
+                // 3. Use res->next() to check if a row was returned
+                if (res->next())
+                {
+                    // Update statements
+                    pstmt = con->prepareStatement("UPDATE creditcards SET cardNumber = ?, cardType = ?, expirationDate = ?, billingAddress = ? WHERE customerID = ?");
+                    pstmt->setString(1, card_number);
+                    pstmt->setString(2, card_type);
+                    pstmt->setString(3, expiration_date);
+                    pstmt->setString(4, billing_address);
+                    pstmt->setInt(5, customer.customer_id);
+
+    
+                    // Execute the update statement
+                    pstmt->executeUpdate();
+                    std::cout << "\nPayment has been updated successfully!\n\n";
+                }
+                else 
+                {
+                    pstmt = con->prepareStatement("INSERT INTO creditcards(cardNumber, cardType, expirationDate, billingAddress, customerID) VALUES (?, ?, ?, ?, ?)");
+                    pstmt->setString(1, card_number);
+                    pstmt->setString(2, card_type);
+                    pstmt->setString(3, expiration_date);
+                    pstmt->setString(4, billing_address);
+                    pstmt->setInt(5, customer.customer_id);
+
+                    // Process request
+                    pstmt->executeUpdate();
+                    
+                    std::cout << "\nPayment has been added successfully!\n\n";
+                }
+                if (res) delete res;
+                if (pstmt) delete pstmt;
+            }
+            catch (sql::SQLException &e)
+            {
+                // Clean up in case of an exception
+                if (res) delete res;
+                if (pstmt) delete pstmt;
+                std::cerr << "SQL Error during payment info change: " << e.what() << std::endl;
+            }
         }
         break;
     case 4:
-        // Update zip code
+        
         {
-            std::string new_zip_code;
-            std::cout << "Enter new zip code: ";
-            std::cin >> new_zip_code;
-            customer.set_zip_code(new_zip_code);
-            std::cout << "Zip code updated successfully!" << std::endl;
+           sql::PreparedStatement *pstmt = nullptr;
+           sql::ResultSet *res = nullptr; 
+
+           
+            std::cout << "\n--- Your Transaction History ---\n";
+            std::cout << "================================\n";
+            try
+            {
+                pstmt = con->prepareStatement(
+                    "SELECT t.transactionDate, v.title, t.quantity, t.price_at_purchase "
+                    "FROM transactions t "
+                    "JOIN vinyl_record AS v ON t.vinylID=v.vinylID "
+                    "WHERE t.customerID = ? "
+                    "ORDER BY t.transactionDate DESC"
+                );
+                pstmt->setInt(1,customer.customer_id);
+                res=pstmt->executeQuery();
+                bool found_transactions=false;
+                while(res->next()) {
+                    found_transactions = true;
+                    std::cout<<"Date: "<< res->getString("transactionDate")<<std::endl;
+                    std::cout<<"  Item: "<< res->getString("title")<<std::endl;
+                    std::cout<<"  Quantity: "<< res->getInt("quantity")<<std::endl;
+                    std::cout<<"  Price: $"<< res->getDouble("price_at_purchase")<<std::endl;
+                }
+                if (!found_transactions) {
+                    std::cout<<"You have no past transactions."<<std::endl;
+                }
+            }
+            catch (sql::SQLException &e)
+            {
+                std::cerr << "SQL Error fetching transaction history: " << e.what() << std::endl;
+                if (res) delete res;
+                if (pstmt) delete pstmt;
+            }
+                
+            std::cout << "\nPress Enter to return to the account settings...";
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
+            std::cin.get();
+            account_settings(con,customer);
         }
         break;
     case 5:
-        // Update payment method
-        {
-            std::string card_type, card_number, cardholder_name, expiration_date, billing_address;
-            std::cout << "Enter card type: ";
-            std::cin >> card_type;
-            std::cout << "Enter card number: ";
-            std::cin >> card_number;
-            std::cout << "Enter cardholder name: ";
-            std::cin.ignore(); // Clear input buffer
-            std::getline(std::cin, cardholder_name);
-            std::cout << "Enter expiration year (YYYY): ";
-            std::cin >> expiration_date;
-            std::cout << "Enter billing address: ";
-            std::cin.ignore(); // Clear input buffer
-            std::getline(std::cin, billing_address);
-
-            PaymentMethod payment_method(0, customer.customer_id, card_type, card_number, cardholder_name, expiration_date, billing_address);
-            // Save payment method to the database
-            // Database Logic
-
-            std::cout << "Payment method updated successfully!" << std::endl;
-        }
-        break;
-    case 6:
-        std::cout << "Returning to home page..." << std::endl;
-        // home_page(customer, staff); // Return to home page
+        std::cout << "\nReturning to home page...\n"<<std::endl;
         break;
     default:
         std::cout << "Invalid choice. Please try again." << std::endl;
-        account_settings(customer, staff); // Retry account settings
+        account_settings(con, customer); // Retry account settings
     }
-    // home_page(customer, staff); // Return to home page after settings
-
 }
-*/

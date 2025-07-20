@@ -3,6 +3,8 @@
 #include <cppconn/driver.h>
 #include <cppconn/exception.h>
 #include <cppconn/prepared_statement.h>
+#include <mysql_driver.h>
+
 
 int main()
 {
@@ -44,9 +46,9 @@ int main()
         std::cout << "====================" << std::endl;
         std::cout << "Please select a sign in option: " << std::endl;
         std::cout << "1. Customer" << std::endl;
-        std::cout << "2. Staff" << std::endl;
-        std::cout << "3. Register as a  new customer" << std::endl;
-        std::cout << "4. Exit" << std::endl;
+        // std::cout << "2. Staff" << std::endl;
+        std::cout << "2. Register as a new customer" << std::endl;
+        std::cout << "3. Exit" << std::endl;
         std::cout << "Enter your choice: ";
         std::cin >> choice;
         std::cout << std::endl;
@@ -59,21 +61,21 @@ int main()
                 boolean = false; // Exit loop after successful sign in
             }
             break;
+        // case 2:
+        //     // Handle staff sign in
+        //     {
+        //         staff_sign_in(con, staff);
+        //         boolean = false; // Exit loop after successful sign in
+        //     }
+        //     break;
         case 2:
-            // Handle staff sign in
-            {
-                staff_sign_in(con, staff);
-                boolean = false; // Exit loop after successful sign in
-            }
-            break;
-        case 3:
             // Handle new customer registration
             {
                 register_customer(con, customer);
                 boolean = false;
             }
             break;
-        case 4:
+        case 3:
             std::cout << "Exiting the application. Thank you!\n" << std::endl;
             exit(0);
         default:
@@ -127,10 +129,10 @@ int main()
             break;
         case 6:
             // Handle account settings
-            // account_settings(customer, staff);
+            account_settings(con, customer);
             break;
         case 7:
-            std::cout << "\nExiting the applciation. Thank you!" << std::endl;
+            std::cout << "\nExiting the application. Thank you!" << std::endl;
             exit(0);
             break;
         default:
