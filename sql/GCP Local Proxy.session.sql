@@ -121,5 +121,7 @@
 -- alter table transactions
 -- modify column cardID int DEFAULT NULL AFTER  vinylID;
 
-alter table creditcards
-modify column expirationDate varchar(50);
+-- alter table creditcards
+-- modify column expirationDate varchar(50);
+
+delete from customer where customerID = 8;

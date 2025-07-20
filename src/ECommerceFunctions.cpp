@@ -6,44 +6,13 @@
 #include <vector>
 #include <limits>
 
-/*
-void start_menu(Customer customer, Staff staff)
-{
-    int choice;
-    std::cout << "Vinyl Store Sign In" << std::endl;
-    std::cout << "====================" << std::endl;
-    std::cout << "Please select a sign in option: " << std::endl;
-    std::cout << "1. Customer" << std::endl;
-    std::cout << "2. Staff" << std::endl;
-    std::cout << "3. Register as a  new customer" << std::endl;
-    std::cout << "4. Exit" << std::endl;
-    std::cout << "Enter your choice: ";
-    std::cin >> choice;
-    switch (choice)
-    {
-    case 1:
-        // Handle customer sign in
-        {
-            customer_sign_in(customer);
-        }
-        break;
-    case 2:
-        // Handle staff sign in
-        staff_sign_in(staff);
-        break;
-    case 3:
-        // Handle new customer registration
-        register_customer(customer, staff);
-        break;
-    case 4:
-        std::cout << "Exiting the application. Thank you!" << std::endl;
-        exit(0);
-    default:
-        std::cout << "Invalid choice. Please try again." << std::endl;
-        start_menu(customer, staff);
+std::string hash_password(const std::string&password) {
+    unsigned long hash = 5381;
+    for (char c: password){
+        hash=((hash << 5)+hash)+c;
     }
+    return std::to_string(hash);
 }
-*/
 
 // Pass the database connection and a reference to the customer object
 void customer_sign_in(sql::Connection *con, Customer &customer)
@@ -68,14 +37,14 @@ void customer_sign_in(sql::Connection *con, Customer &customer)
         if (res->next())
         {
             // A customer was found, now get their stored password
-            std::string db_password = res->getString("userPassword");
+            std::string db_password_hash = res->getString("userPassword");
             std::string first_name = res->getString("firstName");
 
             std::cout << "Customer found. Please enter your password: ";
             std::cin >> password;
 
             // 4. Validate the entered password against the one from the database
-            if (db_password == password)
+            if (db_password_hash == hash_password(password))
             {
                 std::cout << "Sign in successful! Welcome, " << first_name << "!" << std::endl;
                 // You can populate your customer object here if needed
@@ -190,19 +159,24 @@ void register_parameters(std::string &first_name, std::string &last_name, std::s
     std::cin >> phone_number;
     std::cout << "Create a password: ";
     std::cin >> password;
+    
     std::cout << "Enter your address: ";
     // std::cin >> address;
     std::cin.ignore();
     std::getline(std::cin, address);
-    std::cin.clear();
+    // std::cin.clear();
+
     std::cout << "Enter your city: ";
-    std::cin.ignore();
+    // std::cin.ignore();
     std::getline(std::cin, city);
-    std::cin.clear();
+    // std::cin.clear();
+    
+    
     std::cout << "Enter your state: ";
-    std::cin.ignore();
+    // std::cin.ignore();
     std::getline(std::cin, state);
-    std::cin.clear();
+    // std::cin.clear();
+    
     std::cout << "Enter your zip code: ";
     std::cin >> zip_code;
 }
@@ -238,7 +212,7 @@ void register_customer(sql::Connection *con, Customer &customer)
             pstmt->setString(1, first_name);
             pstmt->setString(2, last_name);
             pstmt->setString(3, email);
-            pstmt->setString(4, password);
+            pstmt->setString(4, hash_password(password));
             pstmt->setString(5, address);
             pstmt->setString(6, city);
             pstmt->setString(7, state);
@@ -247,6 +221,21 @@ void register_customer(sql::Connection *con, Customer &customer)
 
             // Execute the INSERT statement
             pstmt->executeUpdate();
+            delete pstmt;
+            //to fix the issue of state mismatch when attempting to get acocunt details in the same instance as registering an acocunt.
+            pstmt = con->prepareStatement("SELECT LAST_INSERT_ID()");
+            res = pstmt->executeQuery();
+            if(res->next()) {
+                customer.customer_id = res->getInt(1);
+                customer.first_name = first_name;
+                customer.last_name = last_name;
+                customer.email = email;
+                customer.set_address(address);
+                customer.set_city(city);
+                customer.set_state(state);
+                customer.set_zip_code(zip_code);
+                customer.phone_number = phone_number;
+            }
 
             std::cout << "\nRegistration successful! You can now sign in.\n" << std::endl;
         }
@@ -261,60 +250,6 @@ void register_customer(sql::Connection *con, Customer &customer)
         std::cerr << "SQL Error during registration: " << e.what() << std::endl;
     }
 }
-
-/*
-void home_page(Customer customer, Staff staff)
-{
-    std::cout << "Welcome to the Vinyl Record Store!" << std::endl;
-    std::cout << "==================================" << std::endl;
-    std::cout << "Menu Options:" << std::endl;
-    std::cout << "1. Search Vinyls by Title" << std::endl;
-    std::cout << "2. Search Vinyls by Artist" << std::endl;
-    std::cout << "3. View All Vinyls" << std::endl;
-    std::cout << "4. View Cart" << std::endl;
-    std::cout << "5. Checkout" << std::endl;
-    std::cout << "6. Account Settings" << std::endl;
-    std::cout << "7. Logout" << std::endl;
-    std::cout << "Enter your choice: ";
-    int choice;
-    std::cin >> choice;
-    // Handle the choice
-    switch (choice)
-    {
-    case 1:
-        // Handle search by title
-        search_vinyl_by_title();
-        break;
-    case 2:
-        // Handle search by artist
-        search_vinyl_by_artist();
-        break;
-    case 3:
-        // Handle view all vinyls
-        view_all_vinyls();
-        break;
-    case 4:
-        // Handle view cart
-        view_cart();
-        break;
-    case 5:
-        // Handle checkout
-        checkout();
-        break;
-    case 6:
-        // Handle account settings
-        account_settings(customer, staff);
-        break;
-    case 7:
-        std::cout << "Logging out..." << std::endl;
-        //start_menu(customer, staff); // Return to start menu
-        break;
-    default:
-        std::cout << "Invalid choice. Please try again." << std::endl;
-        home_page(customer, staff); // Retry home page
-    }
-}
-*/
 
 void search_vinyl_by_title(sql::Connection* con, std::vector<vinyl_record> &cart)
 {
@@ -619,62 +554,60 @@ void account_settings(sql::Connection *con, Customer &customer)
             // DB pointers
             sql::PreparedStatement *pstmt = nullptr;
             sql::ResultSet *res = nullptr;
-            std::string new_password;
-            // Prompt for old password
-            std::string old_password;
-            std::cout << "Enter your old password: ";
-            std::cin >> old_password;
-            // Validate old password
-            if (customer.get_password() != old_password)
-            {
-                std::cout << "Incorrect sequence for old password. Please try again.\n" << std::endl;
-                account_settings(con, customer); // Retry account settings
-            }
-            std::cout << "\nAuthentication successful. Enter new password: ";
-            std::cin >> new_password;
-            customer.set_password(new_password);
-            // DB logic
+            std::string password_entry,db_password_hash, new_password;
             try
             {
-            // 1. Prepare the SQL query
-            pstmt = con->prepareStatement("SELECT * FROM customer WHERE email = ?");
-            pstmt->setString(1, customer.email);
+                pstmt=con->prepareStatement("SELECT userPassword FROM customer WHERE customerID = ? ");
+                pstmt->setInt(1,customer.customer_id);
+                res=pstmt->executeQuery();
+                
+                if (res->next()){
+                    db_password_hash=res->getString("userPassword");
+                } else {
+                    std::cout<< "\nCould not find your account.\n";
+                    break;
+                }
+                delete res;res=nullptr;
+                delete pstmt;pstmt=nullptr;
 
-            // 2. Execute the query and get the ResultSet
-            res = pstmt->executeQuery();
+                std::cout<<"Enter your old password: ";
+                std::cin>> password_entry;
 
-            // 3. Use res->next() to check if a row was returned
-            if (res->next())
-            {
-                // Update statements
-                pstmt = con->prepareStatement("UPDATE customer SET userPassword = ? WHERE email = ?");
-                pstmt->setString(1, customer.get_password());
-                pstmt->setString(2, customer.get_address());
+                if (hash_password(password_entry)==db_password_hash) {
+                    std::cout<<"\nAuthentication successful. Enter new password: ";
+                    std::cin>>new_password;
 
-                // Execute the update statement
-                pstmt->executeUpdate();
-                std::cout << "\nPassword updated successfully!\n" << std::endl;
-            }
-            else 
-            {
-                std::cout << "\nThere was an error processing your request\n\n";
-                if (res) delete res;
+
+                    pstmt=con->prepareStatement("UPDATE customer SET userPassword = ? where customerID = ? ");
+                    pstmt->setString(1,hash_password(new_password));
+                    pstmt->setInt(2,customer.customer_id);
+
+                    if(pstmt->executeUpdate() > 0){
+                        std::cout<<"\nPassword updated successfully!\n"<<std::endl;
+
+                    } else {
+                        std::cout<<"\nPassword update failed.\n"<<std::endl;
+                    }
+
+                } else {
+                    std::cout<<"\nIncorrect password. Please try again.\n"<<std::endl;
+                }
+
+                if (res) delete res;  
                 if (pstmt) delete pstmt;
-                account_settings(con, customer);
+            }
+            catch(sql::SQLException& e)
+            {
+                if (res) delete res;  
+                if (pstmt) delete pstmt;
+                std::cerr << e.what() << '\n';
             }
             if (res) delete res;
-            if (pstmt) delete pstmt;
-            }
-            catch (sql::SQLException &e)
-            {
-                // Clean up in case of an exception
-                if (res) delete res;
-                if (pstmt) delete pstmt;
-                std::cerr << "SQL Error during password change: " << e.what() << std::endl;
-            }
-            std::cout << "Password updated successfully!\n" << std::endl;
+            if (pstmt) delete res;
+            account_settings(con, customer);
         }
         break;
+            
     case 2:
         // Update address
         {
@@ -821,7 +754,6 @@ void account_settings(sql::Connection *con, Customer &customer)
         }
         break;
     case 4:
-        
         {
            sql::PreparedStatement *pstmt = nullptr;
            sql::ResultSet *res = nullptr; 
