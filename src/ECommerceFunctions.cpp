@@ -433,7 +433,7 @@ void add_to_cart(std::vector<vinyl_record> &cart, const vinyl_record &record)
     std::cout << "Returning to homepage...\n\n";
 }
 
-void view_cart(std::vector<vinyl_record> &cart, sql::Connection* con, const Customer customer)
+void view_cart( std::vector<vinyl_record> &cart, sql::Connection* con, Customer customer)
 {
     std::cout << "\nYour cart\n";
     std::cout << "===========\n";

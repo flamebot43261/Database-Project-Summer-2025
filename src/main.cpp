@@ -1,4 +1,11 @@
-#include "ECommerceFunctions.cpp"
+#include "ECommerceFunctions.h"
+#include "Customer.h"
+#include "Staff.h"
+#include "vinyl_record.h"
+#include <iostream>
+#include <string>
+#include <vector>
+#include <cstdlib>
 #include <mysql_connection.h>
 #include <cppconn/driver.h>
 #include <cppconn/exception.h>
@@ -24,7 +31,7 @@ int main()
     driver = get_driver_instance();
 
     // --- Use your Google Cloud SQL details here ---
-    std::string host = "tcp://127.0.0.1:3306"; // e.g., "tcp://34.123.45.67:3306"
+    std::string host = "tcp://127.0.0.1:3306";
     std::string user = "root";
     std::string db = "vinyl_db";
 
@@ -36,7 +43,6 @@ int main()
     Staff staff;
     std::vector<vinyl_record> cart;
 
-    /* LOGIN PAGE ======================================================*/
     /* LOGIN PAGE ======================================================*/
     int boolean = true;
     while (boolean)
@@ -82,12 +88,9 @@ int main()
             std::cout << "Invalid choice. Please try again.\n" << std::endl;
         }
     }
-    /* LOGIN PAGE ====================================================== */
-    /* LOGIN PAGE ====================================================== */
 
     boolean = true; // Reset boolean for home page loop
 
-    /* HOME PAGE ======================================================= */
     /* HOME PAGE ======================================================= */
     while (boolean)
     {
