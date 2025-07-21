@@ -1,8 +1,17 @@
-#include "ECommerceFunctions.cpp"
+#include "ECommerceFunctions.h"
+#include "Customer.h"
+#include "Staff.h"
+#include "vinyl_record.h"
+#include <iostream>
+#include <string>
+#include <vector>
+#include <cstdlib>
 #include <mysql_connection.h>
 #include <cppconn/driver.h>
 #include <cppconn/exception.h>
 #include <cppconn/prepared_statement.h>
+#include <mysql_driver.h>
+
 
 int main()
 {
@@ -22,18 +31,18 @@ int main()
     driver = get_driver_instance();
 
     // --- Use your Google Cloud SQL details here ---
-    std::string host = "tcp://127.0.0.1:3306"; // e.g., "tcp://34.123.45.67:3306"
+    std::string host = "tcp://127.0.0.1:3306";
     std::string user = "root";
     std::string db = "vinyl_db";
 
     con = driver->connect(host, user, pass);
     con->setSchema(db);
     
-    // Initialize Customer and Staff objects
+    // Initialize Customer, Staff, and cart objects
     Customer customer;
     Staff staff;
+    std::vector<vinyl_record> cart;
 
-    /* LOGIN PAGE ======================================================*/
     /* LOGIN PAGE ======================================================*/
     int boolean = true;
     while (boolean)
@@ -43,9 +52,9 @@ int main()
         std::cout << "====================" << std::endl;
         std::cout << "Please select a sign in option: " << std::endl;
         std::cout << "1. Customer" << std::endl;
-        std::cout << "2. Staff" << std::endl;
-        std::cout << "3. Register as a  new customer" << std::endl;
-        std::cout << "4. Exit" << std::endl;
+        // std::cout << "2. Staff" << std::endl;
+        std::cout << "2. Register as a new customer" << std::endl;
+        std::cout << "3. Exit" << std::endl;
         std::cout << "Enter your choice: ";
         std::cin >> choice;
         std::cout << std::endl;
@@ -58,30 +67,30 @@ int main()
                 boolean = false; // Exit loop after successful sign in
             }
             break;
+        // case 2:
+        //     // Handle staff sign in
+        //     {
+        //         staff_sign_in(con, staff);
+        //         boolean = false; // Exit loop after successful sign in
+        //     }
+        //     break;
         case 2:
-            // Handle staff sign in
+            // Handle new customer registration
             {
-                staff_sign_in(con, staff);
-                boolean = false; // Exit loop after successful sign in
+                register_customer(con, customer);
+                boolean = false;
             }
             break;
         case 3:
-            // Handle new customer registration
-            register_customer(customer);
-            break;
-        case 4:
             std::cout << "Exiting the application. Thank you!\n" << std::endl;
             exit(0);
         default:
             std::cout << "Invalid choice. Please try again.\n" << std::endl;
         }
     }
-    /* LOGIN PAGE ====================================================== */
-    /* LOGIN PAGE ====================================================== */
 
     boolean = true; // Reset boolean for home page loop
 
-    /* HOME PAGE ======================================================= */
     /* HOME PAGE ======================================================= */
     while (boolean)
     {
@@ -103,31 +112,31 @@ int main()
         {
         case 1:
             // Handle search by title
-            search_vinyl_by_title();
+            search_vinyl_by_title(con, cart);
             break;
         case 2:
             // Handle search by artist
-            search_vinyl_by_artist();
+            search_vinyl_by_artist(con);
             break;
         case 3:
             // Handle view all vinyls
-            view_all_vinyls();
+            view_all_vinyls(con);
             break;
         case 4:
             // Handle view cart
-            view_cart();
+            view_cart(cart, con, customer);
             break;
         case 5:
             // Handle checkout
-            checkout();
+            checkout(con, customer, cart);
             break;
         case 6:
             // Handle account settings
-            // account_settings(customer, staff);
+            account_settings(con, customer);
             break;
         case 7:
-            std::cout << "Logging out..." << std::endl;
-            // start_menu(customer, staff); // Return to start menu
+            std::cout << "\nExiting the application. Thank you!" << std::endl;
+            exit(0);
             break;
         default:
             std::cout << "Invalid choice. Please try again." << std::endl;
@@ -135,7 +144,7 @@ int main()
         }
     }
 
-     delete res;
+    delete res;
     delete stmt;
     delete con;
 

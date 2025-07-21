@@ -71,39 +71,57 @@
 -- );
 
 -- Populate artists
-INSERT INTO artists (artistName) VALUES
-('The Beatles'),
-('Pink Floyd'),
-('Led Zeppelin'),
-('Miles Davis');
+-- INSERT INTO artists (artistName) VALUES
+-- ('The Beatles'),
+-- ('Pink Floyd'),
+-- ('Led Zeppelin'),
+-- ('Miles Davis');
 
--- Populate customer
-INSERT INTO customer (firstName, lastName, email, userPassword, address, city, state, zip_code, phone_number) VALUES
-('John', 'Doe', 'john.doe@example.com', 'password123', '123 Main St', 'Anytown', 'CA', '12345', '555-1234'),
-('Jane', 'Smith', 'jane.smith@example.com', 'password456', '456 Oak Ave', 'Someville', 'NY', '54321', '555-5678');
+-- -- Populate customer
+-- INSERT INTO customer (firstName, lastName, email, userPassword, address, city, state, zip_code, phone_number) VALUES
+-- ('John', 'Doe', 'john.doe@example.com', 'password123', '123 Main St', 'Anytown', 'CA', '12345', '555-1234'),
+-- ('Jane', 'Smith', 'jane.smith@example.com', 'password456', '456 Oak Ave', 'Someville', 'NY', '54321', '555-5678');
 
--- Populate staff
-INSERT INTO staff (firstName, lastName, email, password_hash, role, hire_date, phone_number, salary) VALUES
-('Alice', 'Johnson', 'alice.j@vinylstore.com', 'hash1', 'Manager', '2023-01-15', '555-1111', 60000.00),
-('Bob', 'Williams', 'bob.w@vinylstore.com', 'hash2', 'Sales Associate', '2023-03-20', '555-2222', 40000.00);
+-- -- Populate staff
+-- INSERT INTO staff (firstName, lastName, email, password_hash, role, hire_date, phone_number, salary) VALUES
+-- ('Alice', 'Johnson', 'alice.j@vinylstore.com', 'hash1', 'Manager', '2023-01-15', '555-1111', 60000.00),
+-- ('Bob', 'Williams', 'bob.w@vinylstore.com', 'hash2', 'Sales Associate', '2023-03-20', '555-2222', 40000.00);
 
--- Populate creditcards
--- Note: Assumes customerIDs are 1 and 2 from the inserts above.
-INSERT INTO creditcards (customerID, cardNumber, cardType, expirationDate, billingAddress) VALUES
-(1, '1111222233334444', 'Visa', '2027-12-31', '123 Main St, Anytown, CA 12345'),
-(2, '5555666677778888', 'MasterCard', '2026-10-31', '456 Oak Ave, Someville, NY 54321');
+-- -- Populate creditcards
+-- -- Note: Assumes customerIDs are 1 and 2 from the inserts above.
+-- INSERT INTO creditcards (customerID, cardNumber, cardType, expirationDate, billingAddress) VALUES
+-- (1, '1111222233334444', 'Visa', '2027-12-31', '123 Main St, Anytown, CA 12345'),
+-- (2, '5555666677778888', 'MasterCard', '2026-10-31', '456 Oak Ave, Someville, NY 54321');
 
--- Populate vinyl_record
--- Note: Assumes artistIDs are 1, 2, 3, 4 from the inserts above.
-INSERT INTO vinyl_record (title, artistID, genre, releaseYear, price, stockQuantity, description) VALUES
-('Abbey Road', 1, 'Rock', 1969, 25.99, 50, 'The eleventh studio album by the English rock band the Beatles.'),
-('The Dark Side of the Moon', 2, 'Progressive Rock', 1973, 29.99, 30, 'The eighth studio album by the English rock band Pink Floyd.'),
-('Led Zeppelin IV', 3, 'Hard Rock', 1971, 27.50, 40, 'The untitled fourth studio album by the English rock band Led Zeppelin.'),
-('Kind of Blue', 4, 'Jazz', 1959, 22.00, 60, 'A studio album by American jazz trumpeter Miles Davis.');
+-- -- Populate vinyl_record
+-- -- Note: Assumes artistIDs are 1, 2, 3, 4 from the inserts above.
+-- INSERT INTO vinyl_record (title, artistID, genre, releaseYear, price, stockQuantity, description) VALUES
+-- ('Abbey Road', 1, 'Rock', 1969, 25.99, 50, 'The eleventh studio album by the English rock band the Beatles.'),
+-- ('The Dark Side of the Moon', 2, 'Progressive Rock', 1973, 29.99, 30, 'The eighth studio album by the English rock band Pink Floyd.'),
+-- ('Led Zeppelin IV', 3, 'Hard Rock', 1971, 27.50, 40, 'The untitled fourth studio album by the English rock band Led Zeppelin.'),
+-- ('Kind of Blue', 4, 'Jazz', 1959, 22.00, 60, 'A studio album by American jazz trumpeter Miles Davis.');
 
--- Populate transactions
--- Note: Assumes customerIDs and vinylIDs from the inserts above.
-INSERT INTO transactions (customerID, vinylID, quantity, price_at_purchase, transactionStatus, card_id) VALUES
-(1, 1, 1, 25.99, 'Completed', 1),
-(2, 2, 1, 29.99, 'Completed', 2),
-(1, 4, 2, 22.00, 'Completed', 1);
+-- -- Populate transactions
+-- -- Note: Assumes customerIDs and vinylIDs from the inserts above.
+-- INSERT INTO transactions (customerID, vinylID, quantity, price_at_purchase, transactionStatus, card_id) VALUES
+-- (1, 1, 1, 25.99, 'Completed', 1),
+-- (2, 2, 1, 29.99, 'Completed', 2),
+-- (1, 4, 2, 22.00, 'Completed', 1);
+
+-- Drop TABLE staff;
+
+-- alter table transactions
+-- drop column card_id
+
+-- alter table transactions
+-- add column cardID int,
+-- ADD CONSTRAINT FK_transactions_creditcards
+-- FOREIGN KEY (cardID) REFERENCES creditcards(cardID);
+
+-- alter table transactions
+-- modify column cardID int DEFAULT NULL AFTER  vinylID;
+
+-- alter table creditcards
+-- modify column expirationDate varchar(50);
+
+delete from customer where customerID = 8;
