@@ -17,7 +17,7 @@ std::string hash_password(const std::string& password);
 
 
 // Login/Registration
-void customer_sign_in(sql::Connection* con, Customer &customer);
+bool customer_sign_in(sql::Connection* con, Customer &customer);
 void staff_sign_in(sql::Connection* con, Staff &staff);
 void register_customer(sql::Connection* con, Customer &customer);
 

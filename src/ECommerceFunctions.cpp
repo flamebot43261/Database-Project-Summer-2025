@@ -15,7 +15,7 @@ std::string hash_password(const std::string&password) {
 }
 
 // Pass the database connection and a reference to the customer object
-void customer_sign_in(sql::Connection *con, Customer &customer)
+bool customer_sign_in(sql::Connection *con, Customer &customer)
 {
     std::string email, password;
     sql::PreparedStatement *pstmt;
@@ -66,16 +66,24 @@ void customer_sign_in(sql::Connection *con, Customer &customer)
                 customer.set_state(state);
                 customer.set_zip_code(zip_code);
                 customer.phone_number = phone_number;
+
+                delete res;
+                delete pstmt;
+                return false;
             }
             else
             {
                 std::cout << "Invalid password. Please try again." << std::endl;
-                customer_sign_in(con, customer);
+                // customer_sign_in(con, customer);
+                return true;
             }
         }
         else
         {
             std::cout << "No customer found with that email address." << std::endl;
+            delete res;
+            delete pstmt;
+            return true;
         }
 
         // 5. Clean up the resources
@@ -86,6 +94,7 @@ void customer_sign_in(sql::Connection *con, Customer &customer)
     {
         std::cerr << "SQL Error during sign-in: " << e.what() << std::endl;
     }
+    return true;
 }
 
 void staff_sign_in(sql::Connection *con, Staff &staff)
@@ -516,7 +525,7 @@ void checkout(sql::Connection* con, const Customer customer, std::vector<vinyl_r
         else
         {
             std::cout << "It seems that you have not saved a payment method to your profile." << std::endl;
-            std::cout << "Would you like to add a payment card? (Not implemented)\n";
+            std::cout << "You may add a payment method in your account settings\n";
         }
 
         // Final cleanup

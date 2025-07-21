@@ -44,7 +44,7 @@ int main()
     std::vector<vinyl_record> cart;
 
     /* LOGIN PAGE ======================================================*/
-    int boolean = true;
+    bool boolean = true;
     while (boolean)
     {
         int choice;
@@ -63,8 +63,7 @@ int main()
         case 1:
             // Handle customer sign in
             {
-                customer_sign_in(con,customer);
-                boolean = false; // Exit loop after successful sign in
+                boolean = customer_sign_in(con, customer);
             }
             break;
         // case 2:
